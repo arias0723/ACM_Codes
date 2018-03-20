@@ -34,7 +34,7 @@ template <class T> using StdTreap = tree<T, null_type, less<T>, rb_tree_tag,tree
 #define popcount __builtin_popcount
 
 const int MAXN = 200000 + 5, MAXNLOG = 22;
-const int MOD = 1e9 + 9;
+const int MOD = 1e9 + 7;
 const int INF = 1e9;
 const int BASE = 31;
 const long double EPS = 1e-9;
@@ -68,7 +68,7 @@ private:
 	// Funtion used for combine results of the children
 	static T combine(T v1, T v2) {
 		// ... reimplement for problem specifics
-		return (v1 + v2) % MOD;
+		return v1 + v2;
 	}
 	template<typename U/*, typename V*/>
 	struct Node {
@@ -81,9 +81,9 @@ private:
 		// Init node with default value
 		void init(Node& lchild, Node& rchild) {
 			// ... reimplement for problem specifics
-			this->lazy = 1;
+			this->lazy = 0;
 			if(this->left == this->right) {
-				this->val = 1;
+				this->val = 0;
 			}
 			else {
 				this->val = combine(lchild.value(), rchild.value());
@@ -97,10 +97,8 @@ private:
 		// Apply on updates
 		void apply(U v) {
 			// ... reimplement for problem specifics
-			this->val *= v;
-			this->val %= MOD;
-			this->lazy *= v;
-			this->lazy %= MOD;
+			this->val += v*(right - left + 1);
+			this->lazy += v;
 		}
 		// Push lazy values to node children
 		void pushLazy(Node& lchild, Node& rchild) {
@@ -108,7 +106,7 @@ private:
 			if(lazy) {
 				lchild.apply(lazy);
 				rchild.apply(lazy);
-				this->lazy = 1;
+				this->lazy = 0;
 			}
 		}
 		// Update node val with children values
@@ -165,6 +163,7 @@ private:
 		return combine(v1, v2);
 	}
 
+
 };
 
 int N, Q, T;
@@ -184,20 +183,21 @@ int main() {
 	//Add your code here...
 
 
-	int N, M, x, y, k, op;	
-	while(cin >> N >> M) {
+	cin >> T;
+	int c, p, q, v;
+	while(T--) {
 
-		Stree<ll> S(N);
-		while(M --) {
-
-			cin >> op;
-			if(op == 0) {
-				cin >> x >> y >> k;
-				S.updateRange(x-1, y-1, k);
+		cin >> N >> Q;
+		Stree<ll> stree(N);
+		while(Q--) {
+			cin >> c;
+			if(c) {
+				cin >> p >> q;
+				cout << stree.queryRange(p-1, q-1) << endl;
 			}
 			else {
-				cin >> x >> y;
-				cout << S.queryRange(x-1, y-1) << endl;
+				cin >> p >> q >> v;
+				stree.updateRange(p-1, q-1, v);
 			}
 		}
 	}	
