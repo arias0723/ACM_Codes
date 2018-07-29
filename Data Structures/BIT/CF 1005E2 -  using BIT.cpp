@@ -40,7 +40,7 @@ template <class T> using StdTreap = tree<T, null_type, less<T>, rb_tree_tag,tree
 #define ubound upper_bound 
 #define popcount __builtin_popcount
 
-const int MAXN = 3005 + 5, MAXNLOG = 22;
+const int MAXN = 400000 + 5, MAXNLOG = 22;
 const ll MOD = 1e9 + 7;
 const int INF = 1e9;
 const int BASE = 31;
@@ -49,24 +49,50 @@ const double PI = 4*atan(1);
 const int boardi[] = {-1, -1, +0, +1, +1, +1, +0, -1};
 const int boardj[] = {+0, +1, +1, +1, +0, -1, -1, -1};
 
+
+
 // Input
+int N, M, Q, P, K;
+int A[MAXN];
 
-int N, M, K, D;
-int S[MAXN], C[MAXN];
-multiset<int> FTree[MAXN];
-
+// BIT
+int FTree[MAXN]; 
 int query(int x) {
-	int v = 1e9;
+	int v = 0;
 	for(; x > 0; x -= (-x&x)) {
-		if(FTree[x].size())
-			v = min(v, *FTree[x].begin());
+		v += FTree[x];
 	}
 	return v;
 }
 void update(int x, int v) {
 	for(; x < MAXN; x += (-x&x)) {
-		FTree[x].insert(v);
+		FTree[x] += v;
 	}
+}
+
+ll solve(int median) {
+
+	memset(FTree, 0, sizeof FTree);
+	int sum = MAXN/2;	// avoid negative partial sums (for BIT)
+	update(sum, 1);
+	ll ans = 0;
+
+	for (int i = 1; i <= N; ++i)
+	{
+		if(A[i] < median) {
+			sum --;
+		}
+		else {
+			sum ++;
+		}
+
+		// cout << sum << ": " << query(sum-1) << endl;
+
+		ans += query(sum - 1);
+		update(sum, 1);
+	}
+
+	return ans;
 }
 
 
@@ -85,38 +111,15 @@ int main() {
 	//Add your code here...
 
 
-	cin >> N;
-	vi cc;
-	for (int i = 0; i < N; ++i)
+	cin >> N >> M;
+
+	
+	for (int i = 1; i <= N; ++i)
 	{
-		cin >> S[i];
-		cc.pback(S[i]);
-	}
-	for (int i = 0; i < N; ++i) {
-		cin >> C[i];
-	}
-	// normalization
-	sort(cc.begin(), cc.end());
-	cc.erase(unique(cc.begin(), cc.end()), cc.end());
-	for (int i = 0; i < N; ++i)
-	{
-		S[i] = lbound(cc.begin(), cc.end(), S[i]) - cc.begin() + 1;
-	}
-	// solve
-	int ans = 1e9;
-	for (int j = 0; j < N; ++j)
-	{
-		for (int k = j + 1; k < N; ++k) if(S[j] < S[k]) {
-			int v = query(S[j] - 1);
-			if(v != 1e9) {
-				ans = min(ans, v + C[j] + C[k]);
-			}
-		}
-		update(S[j], C[j]);
+		cin >> A[i];
 	}
 
-	ans == 1e9 ? cout << -1 : cout << ans;
-
+	cout << solve(M) - solve(M + 1);
 
 
 

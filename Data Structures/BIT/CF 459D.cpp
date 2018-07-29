@@ -40,7 +40,7 @@ template <class T> using StdTreap = tree<T, null_type, less<T>, rb_tree_tag,tree
 #define ubound upper_bound 
 #define popcount __builtin_popcount
 
-const int MAXN = 3005 + 5, MAXNLOG = 22;
+const int MAXN = 1000000 + 5, MAXNLOG = 22;
 const ll MOD = 1e9 + 7;
 const int INF = 1e9;
 const int BASE = 31;
@@ -49,26 +49,28 @@ const double PI = 4*atan(1);
 const int boardi[] = {-1, -1, +0, +1, +1, +1, +0, -1};
 const int boardj[] = {+0, +1, +1, +1, +0, -1, -1, -1};
 
+
+
 // Input
+int N, M, Q, P;
+int A[MAXN];
 
-int N, M, K, D;
-int S[MAXN], C[MAXN];
-multiset<int> FTree[MAXN];
+int freq[MAXN], rfreq[MAXN];
 
+// BIT
+int FTree[MAXN]; 
 int query(int x) {
-	int v = 1e9;
+	int v = 0;
 	for(; x > 0; x -= (-x&x)) {
-		if(FTree[x].size())
-			v = min(v, *FTree[x].begin());
+		v += FTree[x];
 	}
 	return v;
 }
 void update(int x, int v) {
 	for(; x < MAXN; x += (-x&x)) {
-		FTree[x].insert(v);
+		FTree[x] += v;
 	}
 }
-
 
 
 int main() {
@@ -86,36 +88,41 @@ int main() {
 
 
 	cin >> N;
-	vi cc;
 	for (int i = 0; i < N; ++i)
 	{
-		cin >> S[i];
-		cc.pback(S[i]);
-	}
-	for (int i = 0; i < N; ++i) {
-		cin >> C[i];
-	}
-	// normalization
-	sort(cc.begin(), cc.end());
-	cc.erase(unique(cc.begin(), cc.end()), cc.end());
-	for (int i = 0; i < N; ++i)
-	{
-		S[i] = lbound(cc.begin(), cc.end(), S[i]) - cc.begin() + 1;
-	}
-	// solve
-	int ans = 1e9;
-	for (int j = 0; j < N; ++j)
-	{
-		for (int k = j + 1; k < N; ++k) if(S[j] < S[k]) {
-			int v = query(S[j] - 1);
-			if(v != 1e9) {
-				ans = min(ans, v + C[j] + C[k]);
-			}
-		}
-		update(S[j], C[j]);
+		cin >> A[i];
 	}
 
-	ans == 1e9 ? cout << -1 : cout << ans;
+	// compress
+	vi cc(A, A + N);
+	sort(cc.begin(), cc.end());
+	cc.erase( unique(cc.begin(), cc.end()), cc.end() );
+	for (int i = 0; i < N; ++i)
+	{
+		A[i] = lbound(cc.begin(), cc.end(), A[i]) - cc.begin();
+		// cout << A[i] << endl;		
+	}
+
+	// solve
+	for (int i = N-1; i >= 0; --i)
+	{
+		rfreq[A[i]] ++;
+		update(rfreq[A[i]], +1);
+	}
+	ll ans = 0;
+	for (int i = 0; i < N; ++i)
+	{
+		freq[A[i]] ++;
+
+		int f = rfreq[A[i]];
+		rfreq[A[i]] --;
+		update(f, -1);
+
+		ans += query(freq[A[i]] - 1);
+		// cout << A[i] << " = " << freq[A[i]] << " : " <<  query(freq[A[i]] - 1) << endl;
+	}
+
+	cout << ans;
 
 
 
