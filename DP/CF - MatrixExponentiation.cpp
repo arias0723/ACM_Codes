@@ -40,8 +40,8 @@ template <class T> using StdTreap = tree<T, null_type, less<T>, rb_tree_tag,tree
 #define ubound upper_bound 
 #define popcount __builtin_popcount
 
-const int MAXN = 100000 + 5, MAXNLOG = 22;
-const int MOD = 1e9 + 9;
+const int MAXN = 1000000 + 5, MAXNLOG = 22;
+const ll MOD = 1e9 + 7;
 const int INF = 1e9;
 const int BASE = 31;
 const long double EPS = 1e-9;
@@ -49,99 +49,48 @@ const double PI = 4*atan(1);
 const int boardi[] = {-1, -1, +0, +1, +1, +1, +0, -1};
 const int boardj[] = {+0, +1, +1, +1, +0, -1, -1, -1};
 
+
+
 // Input
-#define LCHILD(x) ((x)<<1)
-#define RCHILD(x) (((x)<<1)+1)
-#define RPARENT(x) ((x)>>1)
+int N, M, Q, P;
+char A[MAXN], B[MAXN];
 
+struct matrix
+{
+	ll mtx[4][4];
+	matrix(ll m[4][4]) {
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				mtx[i][j] = m[i][j];
+			}
+		}
+	}
+	matrix operator*(const matrix& m) {
 
-
-// Trie bits
-struct node {
-	int mnm;
-	node *left, *right; 
+		ll nm[4][4] = {0};
+		for (int i = 0; i < 4; ++i) {
+			for (int j = 0; j < 4; ++j) {
+				for (int k = 0; k < 4; ++k)
+				{
+					nm[i][j] += (mtx[i][k] * m.mtx[k][j]) % MOD;
+					nm[i][j] %= MOD;
+				}
+			}
+		}
+		return matrix(nm);
+	}
 };
-int trieSz;
-node trieNodes[200 * MAXN];
 
-node* addNode() {
-	assert(trieSz < 200 * MAXN);
-	trieNodes[trieSz].mnm = MAXN;
-	trieNodes[trieSz].left = 0;
-	trieNodes[trieSz].right = 0;
-	return &(trieNodes[trieSz ++]);
+matrix modpow(matrix a, int b) {
+
+	if(b == 1) return a;
+
+	matrix m = modpow(a, b/2);
+	matrix mm = m * m;
+	if(b%2) mm = mm * a;
+
+	return mm;
 }
-
-void insert(node* r, int x, int depth = 20) {
-
-	if(depth < 0) {
-		r->mnm = min(r->mnm, x);
-		return;
-	}
-
-	r->mnm = min(r->mnm, x);
-	int mask = x&(1<<depth);
-	if(mask) {
-
-		if(r->right == 0) {
-			r->right = addNode();
-		}
-		insert(r->right, x, depth - 1);
-	}
-	else {
-
-		if(r->left == 0) {
-			r->left = addNode();
-		}
-		insert(r->left, x, depth - 1);
-	}
-}
-bool query(node* r, int x, int s, int& ans, int depth = 20) {
-
-	if(depth < 0) {
-		return 1;
-	}
-
-	int xmask = x&(1<<depth);
-	if(xmask) {
-
-		if( r->left && r->left->mnm <= s ) {
-			return query(r->left, x, s, ans, depth - 1);
-		}
-		ans |= (1<<depth);
-		return query(r->right, x, s, ans, depth - 1);
-	}
-	else {
-
-		if( r->right && r->right->mnm <= s ) {
-			ans |= (1<<depth);
-			return query(r->right, x, s, ans,  depth - 1);
-		}
-		return query(r->left, x, s, ans, depth - 1);
-	}
-}
-
-
-
-// Input
-
-int N, M, K, Q;
-
-node* roots[MAXN];
-vi divs[MAXN];
-bool vis[MAXN];
-
-void add(int v) {
-
-	if(vis[v]) return;
-	vis[v] = 1;
-
-	for(int d : divs[v]) {
-		insert(roots[d], v);
-	}
-}
-
-
 
 
 int main() {
@@ -157,39 +106,14 @@ int main() {
 	std::ios::sync_with_stdio(false); cin.tie(0);
 	//Add your code here...
 
+	ll a[4][4] = {{0, 1, 1, 1}, {1, 0, 1, 1}, {1, 1, 0, 1}, {1, 1, 1, 0}};
+	matrix m(a);
 
-	// init
-    for (int i = 1; i < MAXN; i++)
-    {
-        for (int j = i; j < MAXN; j += i)
-        	divs[j].pback(i);
-        roots[i] = addNode();
-    }
+	cin >> N;
 
-	cin >> Q;
-	int t, u, s, k, x;
-	while(Q--) {
+	matrix ans = modpow(m, N);
 
-		cin >> t;
-		if(t == 1) {
-			cin >> u;
-			add(u);
-		}
-		else {
-			cin >> x >> k >> s;
-			s -= x;
-
-			if(x%k) cout << -1 << endl;
-			else {
-				if(roots[k]->mnm > s) cout << -1 << endl;
-				else {
-					int ans = 0;
-					bool can = query(roots[k], x, s, ans);
-					cout << ans << endl;									
-				}	
-			}
-		}
-	}
+	cout << ans.mtx[3][3];
 
 
 

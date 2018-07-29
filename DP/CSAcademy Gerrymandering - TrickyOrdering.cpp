@@ -1,9 +1,5 @@
 /**
-    We can all benefit by doing occasional "toy" programs, when artificial
-    restrictions are set up, so that we are forced to push our abilities to
-    the limit.The art of tackling miniproblems with all our energy will sharpen
-    our talents for the real problems.
-                                        Donald E. Knuth
+	https://csacademy.com/contest/archive/task/gerrymandering/
 **/
 #include <bits/stdc++.h>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -40,8 +36,8 @@ template <class T> using StdTreap = tree<T, null_type, less<T>, rb_tree_tag,tree
 #define ubound upper_bound 
 #define popcount __builtin_popcount
 
-const int MAXN = 5000 + 5, MAXNLOG = 22;
-const int MOD = 1e9 + 9;
+const int MAXN = 100000 + 5, MAXNLOG = 22;
+const ll MOD = 1e9 + 7;
 const int INF = 1e9;
 const int BASE = 31;
 const long double EPS = 1e-9;
@@ -49,18 +45,12 @@ const double PI = 4*atan(1);
 const int boardi[] = {-1, -1, +0, +1, +1, +1, +0, -1};
 const int boardj[] = {+0, +1, +1, +1, +0, -1, -1, -1};
 
-// Input
-#define LCHILD(x) ((x)<<1)
-#define RCHILD(x) (((x)<<1)+1)
-#define RPARENT(x) ((x)>>1)
-
 
 
 // Input
+int N, M, Q, X;
 
-int N, M, K, Q;
-int A[MAXN][MAXN], dp[MAXN][MAXN];
-
+pii dp[MAXN];
 
 
 int main() {
@@ -77,36 +67,53 @@ int main() {
 	//Add your code here...
 
 
-
 	cin >> N;
-	for (int i = 0; i < N; ++i)
+	char county, sz;
+	int largeCnt = 0, last = 0, prev = 0;
+	for (int i = 1; i <= N; ++i)
 	{
-		cin >> A[0][i];
-		dp[0][i] = A[0][i];
-	}
+		cin >> county >> sz;
 
-	for (int i = 1; i < N; ++i) {
-		for (int j = 0; j < N-i; ++j)
-		{
-			A[i][j] = A[i-1][j] ^ A[i-1][j+1];
+		if(county == 'A') {
+			dp[i].first = 1;
 		}
-	}
-	// DP
-	for (int i = 1; i < N; ++i) {
-		for (int j = 0; j < N-i; ++j)
-		{
-			dp[i][j] = max(A[i][j], max(dp[i-1][j], dp[i-1][j+1]));
+		else {
+			dp[i].first = -1;
 		}
+		// partial sum
+		dp[i].first += dp[i-1].first;
+		// init dp
+		if(dp[i].first >= 0) {
+			dp[i].second = 1;
+		}
+
+		if(sz == 'L') {
+			largeCnt ++;
+			prev = last;
+			last = i;
+			// sort previous segment
+			sort(dp + prev, dp + last);
+			// cumul max dp
+			for (int j = prev + 1; j < last; ++j) {
+				dp[j].second = max(dp[j].second, dp[j-1].second);
+			}	
+		}
+
+		// solve
+		if(largeCnt > 1) {
+			// init dp
+			dp[i].second = dp[last-1].second;
+			// best dp in (sum, dp) such that sum <= current sum
+			int pos = ubound(dp + prev, dp + last, mp(dp[i].first, MAXN * 2 )) - dp;
+			if(pos > prev) {
+				pos --;
+				dp[i].second = max(dp[i].second, dp[pos].second + 1);
+			}
+		}
+
 	}
 
-	cin >> Q;
-	int l, r;
-	while(Q--) {
-		cin >> l >> r;
-		int len = r - l;
-		cout << dp[len][l-1] << endl;
-	}
-
+	cout << dp[N].second;
 
 
 

@@ -40,7 +40,7 @@ template <class T> using StdTreap = tree<T, null_type, less<T>, rb_tree_tag,tree
 #define ubound upper_bound 
 #define popcount __builtin_popcount
 
-const int MAXN = 100000 + 5, MAXNLOG = 22;
+const int MAXN = 100000 + 5, MAXNLOG = 25;
 const ll MOD = 1e9 + 7;
 const int INF = 1e9;
 const int BASE = 31;
@@ -50,37 +50,46 @@ const int boardi[] = {-1, -1, +0, +1, +1, +1, +0, -1};
 const int boardj[] = {+0, +1, +1, +1, +0, -1, -1, -1};
 
 
-int A[MAXN], cum[MAXN], xA[MAXN];
+
+// Input
+int N, M, Q, P, K;
+int A[MAXN], cnt[MAXN];
+
 
 // Segment Tree
 struct node {
 	int l, r;
-	int bitscnt[20], lazyval;
+	int bitscnt[25], lazyval;
 	bool lazy;
 
 	void push(node& left, node& right) {
-		// left child
-		left.lazy = 1;
-		left.lazyval ^= lazyval;
+		// push to left child
 		left.apply_lazy(lazyval);
-		// right child
-		right.lazy = 1;
-		right.lazyval ^= lazyval;
+		// push to right child
 		right.apply_lazy(lazyval);
-
+		// reset node lazy
 		lazy = 0; lazyval = 0;
 	}
 	void apply_lazy(int v) {
-		for (int i = 0; i < 20; ++i) {
+		lazy = 1;
+		lazyval ^= v;		
+		for (int i = 0; i < 25; ++i) {
 			if( v&(1<<i) ) {
 				bitscnt[i] = (r - l + 1) - bitscnt[i];
 			}
 		}
 	}
-	void update(node& left, node& right) {
-		for (int i = 0; i < 20; ++i) {
+	void apply_update(node& left, node& right) {
+		for (int i = 0; i < 25; ++i) {
 			bitscnt[i] = left.bitscnt[i] + right.bitscnt[i];
 		}
+	}
+	ll get_val() {
+		ll ans = 0;
+		for (int i = 0; i < 25; ++i) {
+			ans += (1LL<<i) * bitscnt[i];
+		}
+		return ans;
 	}
 };
 class STree {
@@ -98,8 +107,6 @@ public:
 		}
 
 		if(rnode.l >= l && rnode.r <= r) {
-			rnode.lazy = 1;
-			rnode.lazyval ^= val;
 			// update node state
 			rnode.apply_lazy(val);
 
@@ -113,7 +120,7 @@ public:
 		update(l, r, val, 2*root);
 		update(l, r, val, 2*root + 1);
 		// update values
-		rnode.update(nodes[2*root], nodes[2*root + 1]);
+		rnode.apply_update(nodes[2*root], nodes[2*root + 1]);
 	}
 	ll query(const int l, const int r, int root = 1) {
 
@@ -124,12 +131,8 @@ public:
 		}
 
 		if(rnode.l >= l && rnode.r <= r) {
-			ll ans = 0;
-			for (int i = 0; i < 20; ++i) {
-				// cout << i << ": " << rnode.bitscnt[i] << endl;
-				ans += (1LL<<i) * rnode.bitscnt[i];
-			}
-			return ans;
+			// calc node value
+			return rnode.get_val();
 		}
 		// lazy to children
 		if(rnode.lazy) {
@@ -144,24 +147,24 @@ public:
 private:
 	vector<node> nodes;
 	void init(const int l, const int r, int root = 1) {
+		// init node
 		node& rnode = nodes[root];
 		rnode.l = l; rnode.r = r;
 		rnode.lazyval = 0; rnode.lazy = 0;
-		// init
+		// leaf nodes
 		if(r == l) {			
-			for (int i = 0; i < 20; ++i) {
-				rnode.bitscnt[i] = (xA[l] & (1<<i)) > 0;
+			for (int i = 0; i < 25; ++i) {
+				rnode.bitscnt[i] = (A[l] & (1<<i)) > 0;
 			}
 			return;
-		}		
+		}
 		init(l, (l+r)/2, 2*root);
 		init((l+r)/2 + 1, r, 2*root + 1);
-		rnode.update(nodes[2*root], nodes[2*root + 1]);
+		rnode.apply_update(nodes[2*root], nodes[2*root + 1]);
 	}
 };
 
-// Input
-int N, M, K, P;
+
 
 int main() {
 
@@ -177,46 +180,30 @@ int main() {
 	//Add your code here...
 
 
-	cin >> N >> M >> P;
-	for (int i = 0; i < N; ++i)
-	{
-		cin >> A[i];
-		cum[i] = A[i];
-		if(i) {
-			cum[i] ^= cum[i-1];
-		}
-	}
-	// precalc xor
+	cin >> N;
 	for (int i = 0; i < N; ++i) {
-		if(i + P - 1 < N) {
-			xA[i] = cum[i + P - 1];
-			if(i) {
-				xA[i] ^= cum[i-1];
-			}
-		}
-		else {
-			xA[i] = 0;
-		}
-		//cout << xA[i] << endl;
+		cin >> A[i];
 	}
-	// solve
-	STree stree(N); 
-	int op, a, b;
+
+	cin >> M;
+	int t, l, r, x;
+	STree stree(N);
 	while(M--) {
-		
-		cin >> op >> a >> b;
-		if(op == 1) {
-			a--;
-			int l = max(0, a - P + 1);
-			int r = min(a, N - P);
-			// cout << l << " ------- " << r << endl;
-			stree.update(l, r, b);
+
+		cin >> t;
+		if(t == 1) {
+
+			cin >> l >> r;
+			cout << stree.query(l-1, r-1) << endl;
 		}
 		else {
-			cout <<  stree.query(a-1, b-1) << endl;
+
+			cin >> l >> r >> x;
+			stree.update(l-1, r-1, x);
 		}
-		//cout << stree.query(0, N-1) << endl;
 	}
+
+
 
 
 
