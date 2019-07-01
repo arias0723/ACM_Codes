@@ -8,7 +8,7 @@ int pi[MAXN];
 void prefix_function(char* S) {
 
  	int n = strlen(S);
- 	for (int i = 1; i < n + 8; ++i) {
+ 	for (int i = 1; i < n; ++i) {
 
 		int j = pi[i-1];  		
   		while (j > 0 && S[i] != S[j])
